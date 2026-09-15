@@ -1,0 +1,77 @@
+@model E_Commerce.Models.Cart
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h1>Checkout</h1>
+
+@if (TempData["OrderError"] is not null)
+{
+    <div class="alert alert-danger">@TempData["OrderError"]</div>
+}
+
+<div class="row">
+    <div class="col-md-7">
+        <h4>Order Summary</h4>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.CartItems)
+            {
+                <tr>
+                    <td>@item.Product.Title</td>
+                    <td>@item.Product.Price.ToString("C")</td>
+                    <td>@item.Quantity</td>
+                    <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
+                </tr>
+            }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" class="text-end">Total</th>
+                    <th>
+                        @Model.CartItems.Sum(i => i.Product.Price * i.Quantity).ToString("C")
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="col-md-5">
+        <form asp-action="Checkout" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger"></div>
+
+            <div class="mb-3">
+                <label class="form-label">Payment Method</label>
+
+                <select name="PaymentMethod"
+                        class="form-select">
+                    <option value="Cash On Delivery">
+                        Cash On Delivery
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success w-100">
+                Place Order
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

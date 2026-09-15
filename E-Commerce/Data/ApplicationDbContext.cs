@@ -36,12 +36,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(p => p.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // User 1 ---- * Cart
+        // User 1 ----  1 Cart
         builder.Entity<Cart>()
-            .HasOne(c => c.User)
-            .WithMany()
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+             .HasOne(c => c.User)
+             .WithOne(u => u.Cart)
+             .HasForeignKey<Cart>(c => c.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
 
         // Cart 1 ---- * CartItem
         builder.Entity<CartItem>()
@@ -59,10 +59,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         // User 1 ---- * Wishlist
         builder.Entity<Wishlist>()
-            .HasOne(w => w.User)
-            .WithMany()
-            .HasForeignKey(w => w.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+             .HasOne(w => w.User)
+             .WithMany(u => u.WishlistItems)
+             .HasForeignKey(w => w.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
 
         // Product 1 ---- * Wishlist
         builder.Entity<Wishlist>()
@@ -73,10 +73,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         // User 1 ---- * Order
         builder.Entity<Order>()
-            .HasOne(o => o.User)
-            .WithMany()
-            .HasForeignKey(o => o.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+             .HasOne(o => o.User)
+             .WithMany(u => u.Orders)
+             .HasForeignKey(o => o.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
 
         // Order 1 ---- * OrderItem
         builder.Entity<OrderItem>()
