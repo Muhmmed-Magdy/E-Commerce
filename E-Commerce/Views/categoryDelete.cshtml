@@ -1,0 +1,60 @@
+@model E_Commerce.Models.Category
+
+@{
+    ViewData["Title"] = "Delete Category";
+}
+
+<div class="container mt-4">
+
+    <div class="mb-4">
+        <h2 class="fw-bold text-danger">Delete Category</h2>
+        <p class="text-muted">Confirm category deletion</p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <div class="alert alert-danger">
+                Are you sure you want to delete this category?
+            </div>
+
+            <h4 class="fw-bold">
+                @Model.Name
+            </h4>
+
+            <p class="text-muted">
+                @(string.IsNullOrEmpty(Model.Description)
+                    ? "No description available."
+                    : Model.Description)
+            </p>
+
+            <p>
+                <strong>Products:</strong>
+                @(Model.Products?.Count ?? 0)
+            </p>
+
+            <form asp-action="Delete"
+                  method="post">
+
+                <input type="hidden"
+                       name="id"
+                       value="@Model.CategoryId" />
+
+                <button type="submit"
+                        class="btn btn-danger">
+                    Yes, Delete
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-secondary">
+                    Cancel
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
