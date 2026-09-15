@@ -1,0 +1,59 @@
+@model IEnumerable<E_Commerce.Models.Wishlist>
+
+@{
+    ViewData["Title"] = "Wishlist";
+}
+
+<h1>My Wishlist</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Your wishlist is empty.</div>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrWhiteSpace(item.Product.ImagePath))
+                    {
+                        <img src="@item.Product.ImagePath"
+                             class="card-img-top"
+                             alt="@item.Product.Title"
+                             style="height: 220px; object-fit: cover;" />
+                    }
+
+                    <div class="card-body">
+                        <h5 class="card-title">@item.Product.Title</h5>
+                        <p class="card-text">
+                            @item.Product.Price.ToString("C")
+                        </p>
+
+                        <a asp-controller="Product"
+                           asp-action="Details"
+                           asp-route-id="@item.ProductId"
+                           class="btn btn-primary">
+                            Details
+                        </a>
+
+                        <form asp-action="RemoveFromWishlist"
+                              method="post"
+                              class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden"
+                                   name="wishlistId"
+                                   value="@item.WishlistId" />
+
+                            <button type="submit"
+                                    class="btn btn-danger">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

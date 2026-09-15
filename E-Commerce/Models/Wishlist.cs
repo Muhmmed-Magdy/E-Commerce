@@ -8,14 +8,14 @@ public class Wishlist
     public int WishlistId { get; set; }
 
     [Required]
-    public string UserId { get; set; }
+    [ForeignKey(nameof(User))]
+    public string UserId { get; set; } = string.Empty;
 
     [Required]
+    [ForeignKey(nameof(Product))]
     public int ProductId { get; set; }
 
-    [ForeignKey(nameof(UserId))]
-    public ApplicationUser User { get; set; }
+    public ApplicationUser? User { get; set; }
 
-    [ForeignKey(nameof(ProductId))]
-    public Product Product { get; set; }
+    public Product? Product { get; set; }
 }
