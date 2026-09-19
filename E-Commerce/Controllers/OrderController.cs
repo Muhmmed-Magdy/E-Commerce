@@ -13,13 +13,19 @@ public class OrderController : Controller
 {
     private readonly ApplicationDbContext db;
     private readonly UserManager<ApplicationUser> userManager;
+    private readonly IConfiguration configuration;
 
     public OrderController(
         ApplicationDbContext db,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IConfiguration configuration)
     {
         this.db = db;
         this.userManager = userManager;
+        this.configuration = configuration;
+
+        Stripe.StripeConfiguration.ApiKey =
+            configuration["Stripe:SecretKey"];
     }
 
     // GET: /Order/Checkout
@@ -27,12 +33,7 @@ public class OrderController : Controller
     [HttpGet]
     public async Task<IActionResult> Checkout()
     {
-        var userId = userManager.GetUserId(User);
-
-        var cart = await db.Carts
-            .Include(c => c.CartItems)
-                .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.UserId == userId);
+        var cart = await GetUserCart();
 
         if (cart is null || cart.CartItems.Count == 0)
         {
@@ -40,10 +41,14 @@ public class OrderController : Controller
             return RedirectToAction("Index", "Cart");
         }
 
-        if (cart.CartItems.Any(ci => ci.Quantity > ci.Product.Quantity))
+        if (cart.CartItems.Any(ci =>
+            ci.Product is null ||
+            ci.Quantity < 1 ||
+            ci.Quantity > ci.Product.Quantity))
         {
             TempData["OrderError"] =
                 "One or more products do not have enough stock.";
+
             return RedirectToAction("Index", "Cart");
         }
 
@@ -56,31 +61,7 @@ public class OrderController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Checkout(CheckoutViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            return View(model);
-        }
-
-        if (!string.Equals(
-                model.PaymentMethod,
-                "Cash On Delivery",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            ModelState.AddModelError(
-                nameof(model.PaymentMethod),
-                "Only Cash On Delivery is currently supported.");
-
-            return View(model);
-        }
-
-        var userId = userManager.GetUserId(User)!;
-
-        await using var transaction = await db.Database.BeginTransactionAsync();
-
-        var cart = await db.Carts
-            .Include(c => c.CartItems)
-                .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.UserId == userId);
+        var cart = await GetUserCart();
 
         if (cart is null || cart.CartItems.Count == 0)
         {
@@ -88,53 +69,314 @@ public class OrderController : Controller
             return RedirectToAction("Index", "Cart");
         }
 
-        foreach (var cartItem in cart.CartItems)
+        if (!ModelState.IsValid)
         {
-            if (cartItem.Quantity < 1 ||
-                cartItem.Quantity > cartItem.Product.Quantity)
+            return View(cart);
+        }
+
+        if (model.PaymentMethod != "Cash On Delivery" &&
+            model.PaymentMethod != "Visa")
+        {
+            ModelState.AddModelError(
+                nameof(model.PaymentMethod),
+                "Invalid payment method.");
+
+            return View(cart);
+        }
+
+        if (cart.CartItems.Any(ci =>
+            ci.Product is null ||
+            ci.Quantity < 1 ||
+            ci.Quantity > ci.Product.Quantity))
+        {
+            TempData["OrderError"] =
+                "One or more products do not have enough stock.";
+
+            return RedirectToAction("Index", "Cart");
+        }
+
+        // =========================
+        // VISA PAYMENT WITH STRIPE
+        // =========================
+        if (model.PaymentMethod == "Visa")
+        {
+            var sessionOptions =
+                new Stripe.Checkout.SessionCreateOptions
+                {
+                    Mode = "payment",
+
+                    PaymentMethodTypes = new List<string>
+                    {
+                        "card"
+                    },
+
+                    SuccessUrl =
+                        Url.Action(
+                            nameof(PaymentSuccess),
+                            "Order",
+                            null,
+                            Request.Scheme)
+                        + "?session_id={CHECKOUT_SESSION_ID}",
+
+                    CancelUrl =
+                        Url.Action(
+                            nameof(Checkout),
+                            "Order",
+                            null,
+                            Request.Scheme),
+
+                    CustomerEmail = User.Identity?.Name,
+
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["UserId"] =
+                            userManager.GetUserId(User)!,
+
+                        ["FullName"] =
+                            model.FullName,
+
+                        ["Phone"] =
+                            model.Phone,
+
+                        ["City"] =
+                            model.City,
+
+                        ["Address"] =
+                            model.Address,
+
+                        ["PostalCode"] =
+                            model.PostalCode ?? ""
+                    },
+
+                    LineItems =
+                        new List<Stripe.Checkout.SessionLineItemOptions>()
+                };
+
+            foreach (var cartItem in cart.CartItems)
             {
-                TempData["OrderError"] =
-                    $"Not enough stock for {cartItem.Product.Title}.";
-                return RedirectToAction("Index", "Cart");
+                var lineItem =
+                    new Stripe.Checkout.SessionLineItemOptions
+                    {
+                        Quantity = cartItem.Quantity,
+
+                        PriceData =
+                            new Stripe.Checkout.SessionLineItemPriceDataOptions
+                            {
+                                Currency = "egp",
+
+                                UnitAmount =
+                                    (long)(cartItem.Product.Price * 100),
+
+                                ProductData =
+                                    new Stripe.Checkout
+                                        .SessionLineItemPriceDataProductDataOptions
+                                    {
+                                        Name = cartItem.Product.Title
+                                    }
+                            }
+                    };
+
+                sessionOptions.LineItems.Add(lineItem);
             }
+
+            var sessionService =
+                new Stripe.Checkout.SessionService();
+
+            var session =
+                await sessionService.CreateAsync(sessionOptions);
+
+            return Redirect(session.Url);
         }
 
-        // Recalculate the total on the server.
-        var total = cart.CartItems.Sum(ci =>
-            ci.Product.Price * ci.Quantity);
+        // =========================
+        // CASH ON DELIVERY
+        // =========================
+        await using var transaction =
+            await db.Database.BeginTransactionAsync();
 
-        var order = new Order
+        try
         {
-            UserId = userId,
-            OrderDate = DateTime.UtcNow,
-            TotalAmount = total,
-            Status = "Pending",
-            PaymentMethod = "Cash On Delivery",
-            PaymentStatus = "Pending"
-        };
+            var total = cart.CartItems.Sum(cartItem =>
+                cartItem.Product.Price * cartItem.Quantity);
 
-        foreach (var cartItem in cart.CartItems)
-        {
-            order.OrderItems.Add(new OrderItem
+            var order = new Order
             {
-                ProductId = cartItem.ProductId,
-                Quantity = cartItem.Quantity,
-                // Store the price at purchase time.
-                Price = cartItem.Product.Price
-            });
+                UserId = userManager.GetUserId(User)!,
+                OrderDate = DateTime.UtcNow,
+                TotalAmount = total,
+                Status = "Pending",
+                PaymentMethod = "Cash On Delivery",
+                PaymentStatus = "Pending",
 
-            cartItem.Product.Quantity -= cartItem.Quantity;
+                FullName = model.FullName,
+                Phone = model.Phone,
+                City = model.City,
+                Address = model.Address,
+                PostalCode = model.PostalCode
+            };
+
+            foreach (var cartItem in cart.CartItems)
+            {
+                order.OrderItems.Add(new OrderItem
+                {
+                    ProductId = cartItem.ProductId,
+                    Quantity = cartItem.Quantity,
+                    Price = cartItem.Product.Price
+                });
+
+                cartItem.Product.Quantity -= cartItem.Quantity;
+            }
+
+            db.Orders.Add(order);
+
+            db.CartItems.RemoveRange(cart.CartItems);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id = order.OrderId });
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            TempData["OrderError"] =
+                "Something went wrong while placing your order.";
+
+            return RedirectToAction("Index", "Cart");
+        }
+    }
+
+    // GET: /Order/PaymentSuccess
+    [Authorize(Roles = "Customer")]
+    [HttpGet]
+    public async Task<IActionResult> PaymentSuccess(string session_id)
+    {
+        if (string.IsNullOrWhiteSpace(session_id))
+        {
+            return BadRequest("Missing Stripe session id.");
         }
 
-        db.Orders.Add(order);
-        db.CartItems.RemoveRange(cart.CartItems);
+        var sessionService =
+            new Stripe.Checkout.SessionService();
 
-        await db.SaveChangesAsync();
-        await transaction.CommitAsync();
+        var session =
+            await sessionService.GetAsync(session_id);
 
-        return RedirectToAction(
-            nameof(Details),
-            new { id = order.OrderId });
+        if (session.PaymentStatus != "paid")
+        {
+            TempData["OrderError"] =
+                "Payment was not completed.";
+
+            return RedirectToAction(nameof(Checkout));
+        }
+
+        var userId = userManager.GetUserId(User)!;
+
+        // Prevent creating the same order more than once
+        var existingOrder = await db.Orders
+            .FirstOrDefaultAsync(o =>
+                o.StripeSessionId == session_id);
+
+        if (existingOrder is not null)
+        {
+            return RedirectToAction(
+                nameof(Details),
+                new { id = existingOrder.OrderId });
+        }
+
+        var cart = await GetUserCart();
+
+        if (cart is null || cart.CartItems.Count == 0)
+        {
+            TempData["OrderError"] =
+                "Your cart is empty or the order was already created.";
+
+            return RedirectToAction(nameof(MyOrders));
+        }
+
+        if (cart.CartItems.Any(ci =>
+            ci.Product is null ||
+            ci.Quantity < 1 ||
+            ci.Quantity > ci.Product.Quantity))
+        {
+            TempData["OrderError"] =
+                "Some products are no longer available.";
+
+            return RedirectToAction("Index", "Cart");
+        }
+
+        await using var transaction =
+            await db.Database.BeginTransactionAsync();
+
+        try
+        {
+            var total = cart.CartItems.Sum(cartItem =>
+                cartItem.Product.Price * cartItem.Quantity);
+
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.UtcNow,
+                TotalAmount = total,
+                Status = "Pending",
+                PaymentMethod = "Visa",
+                PaymentStatus = "Paid",
+
+                StripeSessionId = session_id,
+
+                FullName = session.Metadata["FullName"],
+                Phone = session.Metadata["Phone"],
+                City = session.Metadata["City"],
+                Address = session.Metadata["Address"],
+                PostalCode = session.Metadata["PostalCode"]
+            };
+
+            foreach (var cartItem in cart.CartItems)
+            {
+                order.OrderItems.Add(new OrderItem
+                {
+                    ProductId = cartItem.ProductId,
+                    Quantity = cartItem.Quantity,
+                    Price = cartItem.Product.Price
+                });
+
+                cartItem.Product.Quantity -= cartItem.Quantity;
+            }
+
+            db.Orders.Add(order);
+
+            db.CartItems.RemoveRange(cart.CartItems);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return RedirectToAction(
+                nameof(Details),
+                new { id = order.OrderId });
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            TempData["OrderError"] =
+                "Payment succeeded, but there was an error creating the order.";
+
+            return RedirectToAction(nameof(MyOrders));
+        }
+    }
+
+    // Get current user's cart
+    private async Task<Cart?> GetUserCart()
+    {
+        var userId = userManager.GetUserId(User);
+
+        return await db.Carts
+            .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
     }
 
     // GET: /Order/MyOrders
@@ -153,6 +395,7 @@ public class OrderController : Controller
     }
 
     // GET: /Order/Details/5
+    [Authorize(Roles = "Customer,Admin")]
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
@@ -166,11 +409,14 @@ public class OrderController : Controller
             return NotFound();
         }
 
-        var userId = userManager.GetUserId(User);
-        var isAdmin = User.IsInRole("Admin");
+        if (User.IsInRole("Admin"))
+        {
+            return View(order);
+        }
 
-        // A customer can only see their own orders.
-        if (!isAdmin && order.UserId != userId)
+        var userId = userManager.GetUserId(User);
+
+        if (order.UserId != userId)
         {
             return Forbid();
         }
@@ -219,14 +465,38 @@ public class OrderController : Controller
             return BadRequest("Invalid order status.");
         }
 
-        var order = await db.Orders.FindAsync(id);
+        var order = await db.Orders
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.OrderId == id);
 
         if (order is null)
         {
             return NotFound();
         }
 
+        if (order.Status == "Delivered" ||
+            order.Status == "Cancelled")
+        {
+            TempData["OrderError"] =
+                "Delivered or cancelled orders cannot be updated.";
+
+            return RedirectToAction(nameof(ManageOrders));
+        }
+
+        if (status == "Cancelled")
+        {
+            foreach (var orderItem in order.OrderItems)
+            {
+                if (orderItem.Product is not null)
+                {
+                    orderItem.Product.Quantity += orderItem.Quantity;
+                }
+            }
+        }
+
         order.Status = status;
+
         await db.SaveChangesAsync();
 
         return RedirectToAction(nameof(ManageOrders));

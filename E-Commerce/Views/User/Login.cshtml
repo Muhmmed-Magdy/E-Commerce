@@ -4,55 +4,128 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="container mt-5">
+<div class="container py-5">
+
     <div class="row justify-content-center">
-        <div class="col-md-5">
 
-            <h2 class="text-center mb-4">Login</h2>
+        <div class="col-md-6 col-lg-5">
 
-            <form asp-action="Login" method="post">
-                <input type="hidden" name="returnUrl" value="@Context.Request.Query["ReturnUrl"]" />
+            <div class="card border-0 shadow-sm rounded-4">
 
-                <div asp-validation-summary="ModelOnly"
-                     class="text-danger mb-3"></div>
+                <div class="card-body p-4 p-md-5">
 
-                <div class="mb-3">
-                    <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" />
-                    <span asp-validation-for="Email"
-                          class="text-danger"></span>
+                    <div class="text-center mb-4">
+
+                        <div class="mb-3" style="font-size: 55px;">
+                            🔐
+                        </div>
+
+                        <span class="text-primary fw-bold">
+                            WELCOME BACK
+                        </span>
+
+                        <h2 class="fw-bold mt-2 mb-2">
+                            Login to Your Account
+                        </h2>
+
+                        <p class="text-muted mb-0">
+                            Enter your details to continue shopping.
+                        </p>
+
+                    </div>
+
+                    <form asp-action="Login" method="post">
+
+                        <input type="hidden"
+                               name="returnUrl"
+                               value="@Context.Request.Query["ReturnUrl"]" />
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+
+                            <label asp-for="Email"
+                                   class="form-label fw-semibold">
+                                Email Address
+                            </label>
+
+                            <input asp-for="Email"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your email" />
+
+                            <span asp-validation-for="Email"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label asp-for="Password"
+                                   class="form-label fw-semibold">
+                                Password
+                            </label>
+
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your password" />
+
+                            <span asp-validation-for="Password"
+                                  class="text-danger small"></span>
+
+                        </div>
+
+                        <div class="d-flex justify-content-between
+                                    align-items-center mb-4">
+
+                            <div class="form-check">
+
+                                <input asp-for="RememberMe"
+                                       class="form-check-input" />
+
+                                <label asp-for="RememberMe"
+                                       class="form-check-label">
+                                    Remember Me
+                                </label>
+
+                            </div>
+
+                            <a asp-action="ForgotPassword"
+                               class="text-decoration-none small">
+                                Forgot Password?
+                            </a>
+
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary btn-lg w-100">
+                            Login
+                        </button>
+
+                    </form>
+
+                    <div class="text-center mt-4">
+
+                        <span class="text-muted">
+                            Don't have an account?
+                        </span>
+
+                        <a asp-action="Register"
+                           class="fw-semibold text-decoration-none">
+                            Create an account
+                        </a>
+
+                    </div>
+
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label"></label>
-                    <input asp-for="Password" class="form-control" />
-                    <span asp-validation-for="Password"
-                          class="text-danger"></span>
-                </div>
-
-                <div class="form-check mb-3">
-                    <input asp-for="RememberMe" class="form-check-input" />
-                    <label asp-for="RememberMe" class="form-check-label">
-                        Remember Me
-                    </label>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">
-                    Login
-                </button>
-
-            </form>
-
-            <div class="text-center mt-3">
-                <a asp-action="Register">Create an account</a>
-            </div>
-
-            <div class="text-center mt-2">
-                <a asp-action="ForgotPassword">Forgot Password?</a>
             </div>
 
         </div>
+
     </div>
+
 </div>
 
 @section Scripts {

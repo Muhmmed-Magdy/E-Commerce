@@ -1,0 +1,176 @@
+@model List<E_Commerce.Models.Category>
+
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<div class="container py-5">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+
+        <div>
+            <span class="text-primary fw-bold">OUR STORE</span>
+
+            <h1 class="fw-bold mb-1">
+                Categories
+            </h1>
+
+            <p class="text-muted mb-0">
+                Browse and manage product categories
+            </p>
+        </div>
+
+        <!-- Admin Add Category Button -->
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-controller="Category"
+               asp-action="Create"
+               class="btn btn-primary px-4 py-2">
+
+                <i class="bi bi-plus-lg me-1"></i>
+                Add Category
+            </a>
+        }
+
+    </div>
+
+    <!-- Categories -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row g-4">
+
+            @foreach (var category in Model)
+            {
+                <div class="col-md-6 col-lg-4 col-xl-3">
+
+                    <div class="card category-card h-100 border-0 shadow-sm rounded-4">
+
+                        <div class="card-body p-4 d-flex flex-column">
+
+                            <!-- Category Icon -->
+                            <div class="category-icon mb-3">
+                                <i class="bi bi-grid"></i>
+                            </div>
+
+                            <!-- Category Name -->
+                            <h4 class="fw-bold mb-2">
+                                @category.Name
+                            </h4>
+
+                            <!-- Category Description -->
+                            <p class="text-muted flex-grow-1">
+                                @(string.IsNullOrWhiteSpace(category.Description)
+                                    ? "No description available."
+                                    : category.Description)
+                            </p>
+
+                            <!-- Customer View Products -->
+                            <a asp-controller="Product"
+                               asp-action="Index"
+                               asp-route-categoryId="@category.CategoryId"
+                               class="btn btn-outline-dark w-100 mb-2">
+
+                                <i class="bi bi-box-seam me-1"></i>
+                                View Products
+                            </a>
+
+                            <!-- Admin Actions -->
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div class="d-flex gap-2">
+
+                                    <a asp-controller="Category"
+                                       asp-action="Edit"
+                                       asp-route-id="@category.CategoryId"
+                                       class="btn btn-outline-primary flex-grow-1">
+
+                                        <i class="bi bi-pencil-square me-1"></i>
+                                        Edit
+                                    </a>
+
+                                    <a asp-controller="Category"
+                                       asp-action="Delete"
+                                       asp-route-id="@category.CategoryId"
+                                       class="btn btn-outline-danger">
+
+                                        <i class="bi bi-trash me-1"></i>
+                                        Delete
+                                    </a>
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+
+            <div class="empty-icon mb-3">
+                <i class="bi bi-grid"></i>
+            </div>
+
+            <h3 class="fw-bold">
+                No Categories Found
+            </h3>
+
+            <p class="text-muted">
+                Start by adding your first category.
+            </p>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-controller="Category"
+                   asp-action="Create"
+                   class="btn btn-primary px-4">
+
+                    <i class="bi bi-plus-lg me-1"></i>
+                    Add Category
+                </a>
+            }
+
+        </div>
+    }
+
+</div>
+
+<style>
+    .category-card {
+        transition: all 0.3s ease;
+    }
+
+        .category-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12) !important;
+        }
+
+    .category-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef2ff;
+        color: #0d6efd;
+        border-radius: 16px;
+        font-size: 28px;
+    }
+
+    .category-card .btn {
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .empty-icon {
+        font-size: 65px;
+        color: #6c757d;
+    }
+</style>

@@ -4,74 +4,339 @@
     ViewData["Title"] = "Checkout";
 }
 
-<h1>Checkout</h1>
+<div class="container py-5">
 
-@if (TempData["OrderError"] is not null)
-{
-    <div class="alert alert-danger">@TempData["OrderError"]</div>
-}
+    <div class="mb-5">
+        <span class="text-primary fw-bold">CHECKOUT</span>
 
-<div class="row">
-    <div class="col-md-7">
-        <h4>Order Summary</h4>
+        <h1 class="fw-bold mb-1">
+            Complete Your Order
+        </h1>
 
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var item in Model.CartItems)
-            {
-                <tr>
-                    <td>@item.Product.Title</td>
-                    <td>@item.Product.Price.ToString("C")</td>
-                    <td>@item.Quantity</td>
-                    <td>@((item.Product.Price * item.Quantity).ToString("C"))</td>
-                </tr>
-            }
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="3" class="text-end">Total</th>
-                    <th>
-                        @Model.CartItems.Sum(i => i.Product.Price * i.Quantity).ToString("C")
-                    </th>
-                </tr>
-            </tfoot>
-        </table>
+        <p class="text-muted">
+            Review your order, enter your shipping address and choose your payment method.
+        </p>
     </div>
 
-    <div class="col-md-5">
-        <form asp-action="Checkout" method="post">
-            @Html.AntiForgeryToken()
+    @if (TempData["OrderError"] is not null)
+    {
+        <div class="alert alert-danger">
+            @TempData["OrderError"]
+        </div>
+    }
 
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger"></div>
+    <div class="row g-4">
 
-            <div class="mb-3">
-                <label class="form-label">Payment Method</label>
+        <!-- Order Summary -->
+        <div class="col-lg-7">
 
-                <select name="PaymentMethod"
-                        class="form-select">
-                    <option value="Cash On Delivery">
-                        Cash On Delivery
-                    </option>
-                </select>
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body p-4">
+
+                    <h4 class="fw-bold mb-4">
+                        Order Summary
+                    </h4>
+
+                    @foreach (var item in Model.CartItems)
+                    {
+                        <div class="card border rounded-4 mb-3 overflow-hidden">
+
+                            <div class="row g-0 align-items-center">
+
+                                <div class="col-md-3">
+
+                                    <div style="height: 130px;
+                                                background: #f5f6f8;
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;">
+
+                                        @if (!string.IsNullOrEmpty(item.Product.ImagePath))
+                                        {
+                                            <img src="@item.Product.ImagePath"
+                                                 alt="@item.Product.Title"
+                                                 style="width: 100%;
+                                                        height: 100%;
+                                                        object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                No Image
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-9">
+
+                                    <div class="card-body">
+
+                                        <h5 class="fw-bold mb-2">
+                                            @item.Product.Title
+                                        </h5>
+
+                                        <div class="d-flex justify-content-between
+                                                    flex-wrap gap-2">
+
+                                            <span class="text-muted">
+                                                Price:
+                                                <strong>
+                                                    @item.Product.Price.ToString("C")
+                                                </strong>
+                                            </span>
+
+                                            <span class="text-muted">
+                                                Quantity:
+                                                <strong>
+                                                    @item.Quantity
+                                                </strong>
+                                            </span>
+
+                                        </div>
+
+                                        <div class="mt-2">
+
+                                            <span class="text-muted">
+                                                Subtotal:
+                                            </span>
+
+                                            <strong class="text-primary">
+                                                @((item.Product.Price * item.Quantity).ToString("C"))
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center
+                                border-top pt-4 mt-4">
+
+                        <span class="fw-bold fs-5">
+                            Total
+                        </span>
+
+                        <span class="fw-bold fs-4 text-primary">
+                            @((Model.CartItems.Sum(i => i.Product.Price * i.Quantity)).ToString("C"))
+                        </span>
+
+                    </div>
+
+                </div>
+
             </div>
 
-            <button type="submit"
-                    class="btn btn-success w-100">
-                Place Order
-            </button>
-        </form>
+        </div>
+
+        <!-- Checkout Details -->
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body p-4">
+
+                    <h4 class="fw-bold mb-4">
+                        Checkout Details
+                    </h4>
+
+                    <form asp-action="Checkout" method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"></div>
+
+                        <!-- Shipping Address -->
+
+                        <h5 class="fw-bold mb-3">
+                            Shipping Address
+                        </h5>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Full Name
+                            </label>
+
+                            <input type="text"
+                                   name="FullName"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your full name"
+                                   required />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Phone Number
+                            </label>
+
+                            <input type="tel"
+                                   name="Phone"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your phone number"
+                                   required />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                City
+                            </label>
+
+                            <input type="text"
+                                   name="City"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter your city"
+                                   required />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Address
+                            </label>
+
+                            <textarea name="Address"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Street, building number, apartment..."
+                                      required></textarea>
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                Postal Code
+                            </label>
+
+                            <input type="text"
+                                   name="PostalCode"
+                                   class="form-control form-control-lg"
+                                   placeholder="Enter postal code" />
+
+                        </div>
+
+                        <hr class="mb-4" />
+
+                        <!-- Payment Method -->
+
+                        <h5 class="fw-bold mb-3">
+                            Payment Details
+                        </h5>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                Payment Method
+                            </label>
+
+                            <select name="PaymentMethod"
+                                    id="paymentMethod"
+                                    class="form-select form-select-lg">
+
+                                <option value="Cash On Delivery">
+                                    Cash On Delivery
+                                </option>
+
+                                <option value="Visa">
+                                    Visa / Credit Card
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Cash On Delivery Info -->
+                        <div id="cashPaymentInfo"
+                             class="alert alert-info">
+
+                            <strong>Cash On Delivery</strong>
+                            <br />
+
+                            You will pay when your order is delivered.
+                        </div>
+
+                        <!-- Visa Info -->
+                        <div id="visaPaymentInfo"
+                             class="d-none">
+
+                            <div class="alert alert-primary">
+                                <strong>Visa / Credit Card</strong>
+                                <br />
+
+                                You will be redirected to Stripe secure checkout
+                                to complete your payment.
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-success w-100 py-3">
+
+                            Place Order
+                        </button>
+
+                        <a asp-controller="Cart"
+                           asp-action="Index"
+                           class="btn btn-outline-dark w-100 py-3 mt-2">
+
+                            Back to Cart
+
+                        </a>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
+
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const paymentMethod =
+                document.getElementById("paymentMethod");
+
+            const cashPaymentInfo =
+                document.getElementById("cashPaymentInfo");
+
+            const visaPaymentInfo =
+                document.getElementById("visaPaymentInfo");
+
+            function updatePaymentInfo() {
+                if (paymentMethod.value === "Visa") {
+                    cashPaymentInfo.classList.add("d-none");
+                    visaPaymentInfo.classList.remove("d-none");
+                } else {
+                    cashPaymentInfo.classList.remove("d-none");
+                    visaPaymentInfo.classList.add("d-none");
+                }
+            }
+
+            paymentMethod.addEventListener(
+                "change",
+                updatePaymentInfo
+            );
+
+            updatePaymentInfo();
+        });
+    </script>
 }

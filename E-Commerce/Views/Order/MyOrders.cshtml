@@ -1,46 +1,196 @@
-@model IEnumerable<E_Commerce.Models.Order>
+﻿@model IEnumerable<E_Commerce.Models.Order>
 
 @{
     ViewData["Title"] = "My Orders";
 }
 
-<h1>My Orders</h1>
+<div class="container py-5">
 
-@if (!Model.Any())
-{
-    <div class="alert alert-info">You have no orders yet.</div>
-}
-else
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Order #</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var order in Model)
-        {
-            <tr>
-                <td>@order.OrderId</td>
-                <td>@order.OrderDate.ToLocalTime().ToString("g")</td>
-                <td>@order.TotalAmount.ToString("C")</td>
-                <td>@order.Status</td>
-                <td>@order.PaymentStatus</td>
-                <td>
-                    <a asp-action="Details"
-                       asp-route-id="@order.OrderId"
-                       class="btn btn-sm btn-primary">
-                        Details
-                    </a>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">My Orders 📦</h1>
+            <p class="text-muted mb-0">
+                Track and view all your orders
+            </p>
+        </div>
+
+        <a asp-controller="Product"
+           asp-action="Index"
+           class="btn btn-primary rounded-pill px-4">
+            Continue Shopping 🛍️
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+            <div class="display-3 mb-3">📦</div>
+
+            <h3 class="fw-bold">No Orders Yet</h3>
+
+            <p class="text-muted">
+                You haven't placed any orders yet.
+            </p>
+
+            <a asp-controller="Product"
+               asp-action="Index"
+               class="btn btn-primary rounded-pill px-4">
+                Start Shopping
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+            <div class="card-header bg-white border-0 p-4">
+                <h5 class="fw-bold mb-0">
+                    Order History
+                </h5>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Order #</th>
+                            <th class="py-3">Date</th>
+                            <th class="py-3">Total</th>
+                            <th class="py-3">Status</th>
+                            <th class="py-3">Payment</th>
+                            <th class="text-center py-3">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td class="px-4 fw-bold text-primary">
+                                    #@order.OrderId
+                                </td>
+
+                                <td>
+                                    <span class="text-muted">
+                                        @order.OrderDate.ToLocalTime().ToString("dd MMM yyyy")
+                                    </span>
+                                    <br />
+                                    <small class="text-muted">
+                                        @order.OrderDate.ToLocalTime().ToString("hh:mm tt")
+                                    </small>
+                                </td>
+
+                                <td>
+                                    <span class="fw-bold">
+                                        @order.TotalAmount.ToString("C")
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @if (order.Status == "Pending")
+                                    {
+                                        <span class="badge rounded-pill bg-warning text-dark px-3 py-2">
+                                            ⏳ Pending
+                                        </span>
+                                    }
+                                    else if (order.Status == "Confirmed")
+                                    {
+                                        <span class="badge rounded-pill bg-info text-dark px-3 py-2">
+                                            ✓ Confirmed
+                                        </span>
+                                    }
+                                    else if (order.Status == "Shipped")
+                                    {
+                                        <span class="badge rounded-pill bg-primary px-3 py-2">
+                                            🚚 Shipped
+                                        </span>
+                                    }
+                                    else if (order.Status == "Delivered")
+                                    {
+                                        <span class="badge rounded-pill bg-success px-3 py-2">
+                                            ✓ Delivered
+                                        </span>
+                                    }
+                                    else if (order.Status == "Cancelled")
+                                    {
+                                        <span class="badge rounded-pill bg-danger px-3 py-2">
+                                            ✕ Cancelled
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-secondary px-3 py-2">
+                                            @order.Status
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (order.PaymentStatus == "Pending")
+                                    {
+                                        <span class="badge rounded-pill bg-warning text-dark px-3 py-2">
+                                            Pending
+                                        </span>
+                                    }
+                                    else if (order.PaymentStatus == "Paid")
+                                    {
+                                        <span class="badge rounded-pill bg-success px-3 py-2">
+                                            Paid
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-secondary px-3 py-2">
+                                            @order.PaymentStatus
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-center">
+                                    <a asp-action="Details"
+                                       asp-route-id="@order.OrderId"
+                                       class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        View Details →
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        border-radius: 20px !important;
+    }
+
+    .table th {
+        font-size: 14px;
+        font-weight: 700;
+        color: #374151;
+        white-space: nowrap;
+    }
+
+    .table td {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .badge {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .btn {
+        font-weight: 600;
+    }
+</style>

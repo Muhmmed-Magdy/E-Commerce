@@ -1,8 +1,498 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-page">
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center g-5">
+
+                <div class="col-lg-6">
+                    <span class="hero-badge">
+                        ✨ Welcome to our store
+                    </span>
+
+                    <h1 class="hero-title">
+                        Everything You Need,
+                        <span>All In One Place.</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        Discover amazing products, great prices, and a smooth
+                        shopping experience made just for you.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+
+                        <a asp-controller="Product"
+                           asp-action="Index"
+                           class="btn btn-primary btn-lg hero-btn">
+                            Shop Now 🛍️
+                        </a>
+
+                        @if (User.Identity?.IsAuthenticated == true &&
+                        User.IsInRole("Customer"))
+                        {
+                            <a asp-controller="Cart"
+                               asp-action="Index"
+                               class="btn btn-outline-dark btn-lg">
+                                View Cart 🛒
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="User"
+                               asp-action="Register"
+                               class="btn btn-outline-dark btn-lg">
+                                Join Us
+                            </a>
+                        }
+
+                    </div>
+
+                    <div class="hero-stats mt-5">
+                        <div>
+                            <h4>100%</h4>
+                            <p>Secure Shopping</p>
+                        </div>
+
+                        <div>
+                            <h4>24/7</h4>
+                            <p>Customer Support</p>
+                        </div>
+
+                        <div>
+                            <h4>Fast</h4>
+                            <p>Delivery</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="hero-visual">
+
+                        <div class="floating-card card-one">
+                            🛍️
+                            <strong>Best Products</strong>
+                            <small>Choose your favorite</small>
+                        </div>
+
+                        <div class="floating-card card-two">
+                            ⭐
+                            <strong>Great Quality</strong>
+                            <small>Trusted shopping</small>
+                        </div>
+
+                        <div class="main-shopping-card">
+                            <div class="shopping-icon">
+                                🛒
+                            </div>
+
+                            <h2>Smart Shopping</h2>
+
+                            <p>
+                                Find what you love.
+                                Buy what you need.
+                            </p>
+
+                            <a asp-controller="Product"
+                               asp-action="Index"
+                               class="btn btn-light">
+                                Explore Products →
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+
+            <div class="text-center mb-5">
+                <span class="section-label">WHY CHOOSE US</span>
+
+                <h2 class="section-title">
+                    Shopping Made Easy
+                </h2>
+
+                <p class="section-description">
+                    Everything you need for a simple and enjoyable shopping
+                    experience.
+                </p>
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon blue-icon">
+                            🚚
+                        </div>
+
+                        <h4>Fast Delivery</h4>
+
+                        <p>
+                            Get your orders delivered quickly and safely.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon green-icon">
+                            🔒
+                        </div>
+
+                        <h4>Secure Payment</h4>
+
+                        <p>
+                            Your shopping experience is safe and protected.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon orange-icon">
+                            ⭐
+                        </div>
+
+                        <h4>Best Quality</h4>
+
+                        <p>
+                            Discover quality products at affordable prices.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Customer CTA -->
+    <section class="customer-cta">
+        <div class="container">
+            <div class="cta-content">
+
+                <div>
+                    <h2>
+                        Ready to find your next favorite product?
+                    </h2>
+
+                    <p>
+                        Browse our products and start shopping today.
+                    </p>
+                </div>
+
+                <a asp-controller="Product"
+                   asp-action="Index"
+                   class="btn btn-light btn-lg">
+                    Browse Products →
+                </a>
+
+            </div>
+        </div>
+    </section>
+
 </div>
+
+<style>
+    body {
+        background: #f8f9fc;
+    }
+
+    .home-page {
+        overflow: hidden;
+    }
+
+    .hero-section {
+        padding: 90px 0;
+        background: linear-gradient(135deg, #eff6ff 0%, #ffffff 55%, #f5f3ff 100%);
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 9px 16px;
+        border-radius: 30px;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .hero-title {
+        font-size: clamp(40px, 5vw, 65px);
+        line-height: 1.1;
+        font-weight: 800;
+        color: #111827;
+        letter-spacing: -2px;
+    }
+
+        .hero-title span {
+            display: block;
+            color: #2563eb;
+        }
+
+    .hero-description {
+        max-width: 520px;
+        color: #6b7280;
+        font-size: 18px;
+        line-height: 1.8;
+        margin-top: 25px;
+    }
+
+    .hero-btn {
+        background: #2563eb;
+        border-color: #2563eb;
+        border-radius: 12px;
+        padding: 13px 28px;
+        font-weight: 600;
+    }
+
+        .hero-btn:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
+    .hero-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 35px;
+    }
+
+        .hero-stats h4 {
+            margin: 0;
+            color: #2563eb;
+            font-weight: 800;
+        }
+
+        .hero-stats p {
+            margin: 4px 0 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+    .hero-visual {
+        position: relative;
+        min-height: 420px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .main-shopping-card {
+        width: 330px;
+        min-height: 350px;
+        padding: 45px 30px;
+        text-align: center;
+        border-radius: 35px;
+        background: linear-gradient(145deg, #2563eb, #7c3aed);
+        color: white;
+        box-shadow: 0 25px 60px rgba(37, 99, 235, 0.3);
+        transform: rotate(-5deg);
+    }
+
+    .shopping-icon {
+        font-size: 85px;
+        margin-bottom: 20px;
+    }
+
+    .main-shopping-card h2 {
+        font-weight: 800;
+    }
+
+    .main-shopping-card p {
+        color: #dbeafe;
+        line-height: 1.7;
+        margin-bottom: 25px;
+    }
+
+    .main-shopping-card .btn {
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .floating-card {
+        position: absolute;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 18px 22px;
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        color: #111827;
+    }
+
+        .floating-card strong {
+            font-size: 14px;
+        }
+
+        .floating-card small {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+    .card-one {
+        top: 30px;
+        left: 0;
+    }
+
+    .card-two {
+        right: 0;
+        bottom: 30px;
+    }
+
+    .features-section {
+        padding: 85px 0;
+        background: #ffffff;
+    }
+
+    .section-label {
+        color: #2563eb;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+
+    .section-title {
+        color: #111827;
+        font-weight: 800;
+        font-size: 38px;
+        margin-top: 12px;
+    }
+
+    .section-description {
+        color: #6b7280;
+    }
+
+    .feature-card {
+        height: 100%;
+        padding: 35px 28px;
+        text-align: center;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 22px;
+        transition: 0.3s;
+    }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+
+    .feature-icon {
+        width: 75px;
+        height: 75px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 22px;
+        border-radius: 22px;
+        font-size: 35px;
+    }
+
+    .blue-icon {
+        background: #dbeafe;
+    }
+
+    .green-icon {
+        background: #dcfce7;
+    }
+
+    .orange-icon {
+        background: #ffedd5;
+    }
+
+    .feature-card h4 {
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 12px;
+    }
+
+    .feature-card p {
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    .customer-cta {
+        padding: 60px 0;
+        background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+    }
+
+    .cta-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 25px;
+        color: white;
+    }
+
+        .cta-content h2 {
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .cta-content p {
+            color: #dbeafe;
+            margin: 0;
+        }
+
+        .cta-content .btn {
+            color: #1d4ed8;
+            border-radius: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+    @@media (max-width: 991px) {
+        .hero-section {
+            padding: 60px 0;
+        }
+
+        .hero-visual {
+            margin-top: 35px;
+        }
+
+        .cta-content {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .hero-title {
+            font-size: 42px;
+        }
+
+        .hero-stats {
+            gap: 20px;
+        }
+
+        .main-shopping-card {
+            width: 280px;
+        }
+
+        .floating-card {
+            padding: 12px;
+        }
+
+        .card-one {
+            left: -5px;
+        }
+
+        .card-two {
+            right: -5px;
+        }
+    }
+</style>

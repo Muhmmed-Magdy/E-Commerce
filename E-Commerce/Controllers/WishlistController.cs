@@ -64,7 +64,7 @@ public class WishlistController : Controller
             await db.SaveChangesAsync();
         }
 
-        return RedirectToAction("Details", "Product", new { id = productId });
+        return RedirectToAction("Index", "Product");
     }
 
     // POST: /Wishlist/RemoveFromWishlist
